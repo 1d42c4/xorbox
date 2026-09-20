@@ -1,58 +1,8 @@
+mod support;
 use std::fs;
-use std::path::PathBuf;
-use std::process::{Command, Output, Stdio};
-use std::sync::Mutex;
-
-// A concurrent fork can inherit another test's briefly open executable-copy
-// writer before CLOEXEC closes it, making exec fail with ETXTBSY on Linux.
-// Serialize copying and process launch; let the actual tests run concurrently.
-static EXECUTABLE_SETUP: Mutex<()> = Mutex::new(());
-
-struct Fixture {
-    dir: tempfile::TempDir,
-    elsewhere: tempfile::TempDir,
-    exe: PathBuf,
-}
-impl Fixture {
-    fn new() -> Self {
-        let _guard = EXECUTABLE_SETUP.lock().unwrap();
-        let dir = tempfile::tempdir().unwrap();
-        let exe = dir.path().join(if cfg!(windows) {
-            "xorbox.exe"
-        } else {
-            "xorbox"
-        });
-        fs::copy(env!("CARGO_BIN_EXE_xorbox"), &exe).unwrap();
-        Self {
-            dir,
-            exe,
-            elsewhere: tempfile::tempdir().unwrap(),
-        }
-    }
-    fn run(&self, args: &[&str]) -> Output {
-        let child = {
-            let _guard = EXECUTABLE_SETUP.lock().unwrap();
-            Command::new(&self.exe)
-                .args(args)
-                .current_dir(self.elsewhere.path())
-                .stdin(Stdio::null())
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
-                .spawn()
-                .unwrap()
-        };
-        child.wait_with_output().unwrap()
-    }
-    fn ok(&self, args: &[&str]) -> Output {
-        let out = self.run(args);
-        assert!(
-            out.status.success(),
-            "{args:?}: {}",
-            String::from_utf8_lossy(&out.stderr)
-        );
-        out
-    }
-}
+#[cfg(windows)]
+use std::process::Command;
+use support::Fixture;
 
 #[test]
 fn sha3_hashes_literal_utf8_without_newline() {

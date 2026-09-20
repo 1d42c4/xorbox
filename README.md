@@ -148,15 +148,18 @@ The source is platform-selected at compile time: `src/platform/windows.rs` versu
   transferred executable executable with `chmod +x xorbox`.
 
 Native scripts run formatting, Clippy, tests, and release compilation. `Cargo.lock`
-fixes dependency versions. The included GitHub Actions workflow can run native
-Windows/Linux checks if this source is placed in a repository. It has not been run
-remotely as part of this delivery.
+fixes dependency versions. GitHub Actions runs the full native suite on Windows
+and Linux. Building and testing requires Rust and the platform build tools above;
+there is no Python dependency or separately installed cryptography library.
 
-Additional Windows console tests use Python 3.12+ (standard library only):
-`python verification/windows_console.py target/x86_64-pc-windows-msvc/release/xorbox.exe`.
-They create hidden test consoles and disposable files, test password editing and
-hidden Unicode input, and cancel each streaming operation with Ctrl-C. They need
-approximately 2.1 GiB of temporary disk space. The Windows CI job includes them.
+Run all tests with `cargo test --locked --release`. This includes independent Rust
+crypto comparisons, 256 MiB streaming checks with a 96 MiB process-memory limit,
+and, on Windows, 17 hidden-console tests for passwords, Unicode editing and Ctrl-C
+cancellation. Allow approximately 2.1 GiB of free temporary disk space. The tests
+use disposable public data and never send input or Ctrl-C to your console.
+Use `cargo test --locked --release --test interop -- --nocapture` to see streaming
+timings and sampled memory use. Password derivation has a separate 64 MiB memory
+cost; the streaming memory limit applies only to file transforms.
 
 See `FORMAT.md` for the file formats and `VERIFICATION.md` for performed checks.
 This new application has not undergone an independent security audit.

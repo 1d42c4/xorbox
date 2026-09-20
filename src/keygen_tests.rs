@@ -2,6 +2,22 @@ use super::*;
 use serde_json::json;
 use std::fs;
 
+#[path = "../tests/support/key_reference.rs"]
+mod key_reference;
+
+#[test]
+fn generated_key_matches_independent_argon2_chacha20_and_sha3() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = Root::for_test(dir.path());
+    let password = "public reference 日本語 🔐".as_bytes();
+    make(&root, (CHUNK + 17) as u64, password).unwrap();
+    let meta = serde_json::from_slice(&fs::read(root.dir.join("key.meta")).unwrap()).unwrap();
+    assert_eq!(
+        fs::read(root.dir.join("key.key")).unwrap(),
+        key_reference::expected_key(password, &meta)
+    );
+}
+
 fn empty_of_keys_and_temps(root: &Root) {
     assert!(!root.dir.join("key.key").exists());
     assert!(!fs::read_dir(&root.dir).unwrap().any(|e| {

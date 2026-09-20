@@ -8,4 +8,3 @@ key.meta
 *.exe
 *.pdb
 *.xcha
-__pycache__/

@@ -1,7 +1,61 @@
 # Verification record
 
-Performed on 2026-09-20 with Rust 1.98.1, edition 2024. Current release: **0.1.1**.
-See `REVIEW.md` for the review findings and fixes in this release.
+Performed on 2026-09-20 with Rust 1.98.1, edition 2024. Application version: **0.1.1**.
+The Rust-only verification migration changes tests and build metadata, not application
+commands, encryption formats, or key derivation. See `REVIEW.md` for earlier fixes.
+
+## Current Rust-only suite
+
+Run `cargo test --locked --release`; no Python interpreter, Python packages,
+OpenSSL installation, or libsodium installation is needed. Cargo obtains the Rust
+test dependencies. The Windows and Linux GitHub jobs run this same command.
+
+| Coverage | Windows | Linux |
+| --- | ---: | ---: |
+| Unit tests | 56 | 43 |
+| CLI integration tests | 9 | 8 |
+| Independent crypto and large-file integration tests | 3 | 3 |
+| Native Windows console tests | 17 | Not applicable |
+| Total | 85 | 54 |
+
+The Windows suite passed locally with no ignored tests. Formatting and Clippy with
+warnings denied passed for Windows and Linux. Native Linux execution is performed
+by the required GitHub check; its result is recorded on the pull request.
+
+The three former Python scripts have been replaced as follows:
+
+| Former script | Rust coverage |
+| --- | --- |
+| `windows_console.py` | `tests/windows_console.rs`: all 17 hidden-console, Unicode, editing, password, and Ctrl-C scenarios |
+| `cancel_windows.py` | The Windows XOR cancellation case retains the 1,073,741,843-byte original-file hash check |
+| `interop.py` | `tests/interop.rs`, `src/keygen_tests.rs`, and `tests/support/key_reference.rs` |
+
+The independent references are `tiny-keccak` for SHA3-512, `crypto_secretstream`
+for libsodium-compatible secretstream, `rust-argon2` for Argon2id, and `orion` for
+ChaCha20. These are test-only dependencies and use different implementations from
+the application's crypto. Secretstream is checked in both directions at six
+boundary sizes. Key generation is checked byte-for-byte across a 1 MiB boundary;
+the actual hidden Unicode password flow is independently checked on Windows too.
+These checks now run automatically instead of requiring an optional manual script.
+
+The 256 MiB test checks XChaCha encryption/decryption and repeating XOR recovery,
+verifies full SHA3-512 hashes, and enforces a sampled process RSS below 96 MiB for
+each transform. Timing is reported with `-- --nocapture`, without a speed threshold.
+Key derivation's separate 64 MiB allocation is not subject to this streaming limit.
+Windows cancellation tests wait for a live file-handle size above 1 MiB, then
+require exit 130, unchanged originals/metadata, and removal of temporary output.
+The 20 GB cancellation cases do not generate complete 20 GB keys.
+
+The updated lockfile has 112 dependencies, including test-only dependencies.
+The RustSec advisory scan reported zero vulnerabilities and zero warnings against
+the same 1,251-advisory database used below. This offline recheck did not query
+yanked-release status. See `verification/audit-rust-tests.json`.
+
+## Historical release verification
+
+The remaining record and older JSON reports describe earlier release runs. Their
+Python/libsodium/OpenSSL references document those completed checks; they are not
+requirements for building, using, or testing the current source.
 
 ## Windows x86_64 (MSVC, static CRT)
 
@@ -75,17 +129,16 @@ were rerun as well. See `verification/interop-v0.1.1-results.json`.
 The saved key-generator fixture from 0.1.0 still matches the independent derivation;
 the cipher and key expansion formats are unchanged.
 
-## Linux
+## Historical Linux build and subsequent baseline CI
 
 - A separate **x86_64-unknown-linux-musl** release binary was cross-compiled on
   Windows using Rust's bundled LLD and statically linked musl runtime.
 - Linux source and tests were checked by Clippy with warnings denied for musl and
   checked for the GNU target as well.
-- **The Linux executable has not been run on a native Linux host.** WSL was not
-  installed. The supplied `build-linux.sh` runs the full native suite, including
-  Linux-only symlink/FIFO checks, before producing its native release binary.
-- The supplied CI workflow defines Windows and Linux native test jobs; it was not
-  pushed or executed remotely.
+- WSL was not installed locally. After publication, the baseline suite passed on
+  native GitHub Linux and Windows runners in pull request #1, including Linux-only
+  symlink/FIFO checks. The Windows-cross-compiled musl executable itself was not run
+  locally; native CI builds and tests the GNU target.
 
 ## Dependency audit and remaining limits
 
@@ -99,5 +152,5 @@ See `verification/audit.json` and `verification/audit-v0.1.1.json`.
 This verifies tested behavior, not an independent security audit or a proof of
 correctness. Real power-loss tests, physical disk-full/device failures, hostile
 filesystem races, all supported Linux filesystems, and non-x86_64 runtime behavior
-have not been exercised here. The Linux binary requires native testing before
-relying on its in-place mode for irreplaceable data.
+have not been exercised here. CI results do not establish power-loss durability on
+every user's filesystem or storage hardware.
