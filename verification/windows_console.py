@@ -77,7 +77,9 @@ class Console:
         info = subprocess.STARTUPINFO()
         info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         info.wShowWindow = 0
-        self.p = subprocess.Popen([str(self.exe), *self.args], stdout=subprocess.PIPE,
+        # Hosted runners may have an invalid inherited stdin handle, especially
+        # after FreeConsole. Password input uses CONIN$, so give stdin a valid NUL.
+        self.p = subprocess.Popen([str(self.exe), *self.args], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NEW_CONSOLE,
                                   startupinfo=info)
         self.handles = []
@@ -255,7 +257,7 @@ def main():
                 (root / "xcha.key").write_bytes(bytes(range(32)))
                 if command == "xcha-decrypt":
                     subprocess.run([str(exe), "xcha", "E", "data", "--in-place"],
-                                   capture_output=True, timeout=30, check=True)
+                                   stdin=subprocess.DEVNULL, capture_output=True, timeout=30, check=True)
                 before = digest(data)
             if command == "keyrestore":
                 # Public valid recipe with a larger requested stream. Cancellation
