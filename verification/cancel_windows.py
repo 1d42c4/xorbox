@@ -32,7 +32,7 @@ with tempfile.TemporaryDirectory(prefix="xorbox-cancel-") as directory:
     startup.dwFlags |= subprocess.STARTF_USESHOWWINDOW
     startup.wShowWindow = 0
     p = subprocess.Popen([str(exe), "xor", "data", "--in-place", "--repeat-key"],
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          creationflags=subprocess.CREATE_NEW_CONSOLE,
                          startupinfo=startup)
     try:

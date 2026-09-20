@@ -1,6 +1,12 @@
 use std::fs;
 use std::path::PathBuf;
-use std::process::{Command, Output};
+use std::process::{Command, Output, Stdio};
+use std::sync::Mutex;
+
+// A concurrent fork can inherit another test's briefly open executable-copy
+// writer before CLOEXEC closes it, making exec fail with ETXTBSY on Linux.
+// Serialize copying and process launch; let the actual tests run concurrently.
+static EXECUTABLE_SETUP: Mutex<()> = Mutex::new(());
 
 struct Fixture {
     dir: tempfile::TempDir,
@@ -9,6 +15,7 @@ struct Fixture {
 }
 impl Fixture {
     fn new() -> Self {
+        let _guard = EXECUTABLE_SETUP.lock().unwrap();
         let dir = tempfile::tempdir().unwrap();
         let exe = dir.path().join(if cfg!(windows) {
             "xorbox.exe"
@@ -23,11 +30,18 @@ impl Fixture {
         }
     }
     fn run(&self, args: &[&str]) -> Output {
-        Command::new(&self.exe)
-            .args(args)
-            .current_dir(self.elsewhere.path())
-            .output()
-            .unwrap()
+        let child = {
+            let _guard = EXECUTABLE_SETUP.lock().unwrap();
+            Command::new(&self.exe)
+                .args(args)
+                .current_dir(self.elsewhere.path())
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+                .unwrap()
+        };
+        child.wait_with_output().unwrap()
     }
     fn ok(&self, args: &[&str]) -> Output {
         let out = self.run(args);
