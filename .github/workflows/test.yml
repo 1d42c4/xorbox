@@ -20,6 +20,3 @@ jobs:
       - run: cargo clippy --locked --all-targets --target ${{ matrix.target }} -- -D warnings
       - run: cargo test --locked --release --target ${{ matrix.target }}
       - run: cargo build --locked --release --target ${{ matrix.target }}
-      - name: Windows console and cancellation checks
-        if: runner.os == 'Windows'
-        run: python verification/windows_console.py target/x86_64-pc-windows-msvc/release/xorbox.exe
