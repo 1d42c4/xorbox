@@ -1,0 +1,105 @@
+{
+  "executable_sha256": "0df08c23afde33de0bc403611a9468bc049871689ca18ff96726a8ade77056f5",
+  "tests_passed": 17,
+  "cases": [
+    {
+      "test": "prompt_cancel",
+      "command": [
+        "sha3"
+      ],
+      "confirmation": false,
+      "exit": 130,
+      "console_restored": true
+    },
+    {
+      "test": "prompt_cancel",
+      "command": [
+        "keymake",
+        "65"
+      ],
+      "confirmation": false,
+      "exit": 130,
+      "console_restored": true
+    },
+    {
+      "test": "prompt_cancel",
+      "command": [
+        "keymake",
+        "65"
+      ],
+      "confirmation": true,
+      "exit": 130,
+      "console_restored": true
+    },
+    {
+      "test": "unicode_hidden_password_round_trip",
+      "key_bytes": 65
+    },
+    {
+      "test": "empty_or_mismatched_password",
+      "empty": true
+    },
+    {
+      "test": "empty_or_mismatched_password",
+      "empty": false
+    },
+    {
+      "test": "private_sha3_unicode"
+    },
+    {
+      "test": "hidden_input_editing",
+      "expected": "apple"
+    },
+    {
+      "test": "hidden_input_editing",
+      "expected": "apple"
+    },
+    {
+      "test": "hidden_input_editing",
+      "expected": "apple "
+    },
+    {
+      "test": "hidden_input_editing",
+      "expected": ""
+    },
+    {
+      "test": "keyboard_ctrl_c",
+      "exit": 130
+    },
+    {
+      "test": "streaming_cancel",
+      "command": "xor",
+      "exit": 130,
+      "original_preserved": true,
+      "temporary_cleaned": true
+    },
+    {
+      "test": "streaming_cancel",
+      "command": "xcha-encrypt",
+      "exit": 130,
+      "original_preserved": true,
+      "temporary_cleaned": true
+    },
+    {
+      "test": "streaming_cancel",
+      "command": "xcha-decrypt",
+      "exit": 130,
+      "original_preserved": true,
+      "temporary_cleaned": true
+    },
+    {
+      "test": "streaming_cancel",
+      "command": "keymake",
+      "exit": 130,
+      "original_preserved": true,
+      "temporary_cleaned": true
+    },
+    {
+      "test": "streaming_cancel",
+      "command": "keyrestore",
+      "exit": 130,
+      "original_preserved": true,
+      "temporary_cleaned": true
+    }
+  ]
+}

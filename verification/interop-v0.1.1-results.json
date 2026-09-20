@@ -1,0 +1,22 @@
+{
+  "sha3_vs_python": "5 vectors passed",
+  "secretstream_vs_libsodium": "6 sizes passed in both directions",
+  "large_file_mib": 256,
+  "large_xcha_encrypt": {
+    "seconds": 2.05,
+    "sampled_peak_rss_mib": 7.31
+  },
+  "large_xcha_decrypt": {
+    "seconds": 2.09,
+    "sampled_peak_rss_mib": 7.05
+  },
+  "large_xor_repeat": {
+    "seconds": 1.97,
+    "sampled_peak_rss_mib": 6.99
+  },
+  "large_xor_restore": {
+    "seconds": 1.95,
+    "sampled_peak_rss_mib": 6.99
+  },
+  "keymake_vs_argon2_and_openssl": "1048593 bytes matched"
+}

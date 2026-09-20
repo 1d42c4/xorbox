@@ -1,0 +1,25 @@
+name: Native Windows and Linux checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+      - run: rustup target add --toolchain 1.98.1 ${{ matrix.target }}
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --locked --all-targets --target ${{ matrix.target }} -- -D warnings
+      - run: cargo test --locked --release --target ${{ matrix.target }}
+      - run: cargo build --locked --release --target ${{ matrix.target }}
+      - name: Windows console and cancellation checks
+        if: runner.os == 'Windows'
+        run: python verification/windows_console.py target/x86_64-pc-windows-msvc/release/xorbox.exe

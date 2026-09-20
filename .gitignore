@@ -1,0 +1,11 @@
+/target/
+/dist/
+*.key
+key.meta
+.xorbox.lock
+.xorbox-*.tmp
+
+*.exe
+*.pdb
+*.xcha
+__pycache__/
